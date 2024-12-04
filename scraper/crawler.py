@@ -1,5 +1,7 @@
 from abc import ABC
 import json
+import boto3
+from utils.constants import bucket_name
 
 
 class Crawler(ABC):
@@ -7,14 +9,25 @@ class Crawler(ABC):
         self.data = {}
         self.url = url
 
-    def export_json(self) -> None:
+    def upload_to_s3(self):
+        json_data = self.export_json()
+        s3 = boto3.client('s3')
         try:
-            with open(f"output_files/{type(self).__name__}.json", "r+", encoding='utf-8') as f:
-                f.write(json.dumps(self.data, indent=4, ensure_ascii=False))
-        except FileNotFoundError:
-            print("no such file created yet, creating now !")
-            with open(f"output_files/{type(self).__name__}.json", "w", encoding='utf-8') as f:
-                f.write(json.dumps(self.data, indent=4, ensure_ascii=False))
+            object_name = f"{type(self).__name__}.json"  # File name in the bucket
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=object_name,
+                Body=json_data,
+                ContentType="application/json"
+            )
+            print(f"JSON data successfully uploaded to {bucket_name}/{object_name}")
+        except Exception as e:
+            print(f"Error uploading to S3: {e}")
+
+    def export_json(self) -> str:
+        json_data = json.dumps(self.data, indent=4, ensure_ascii=False)
+        print(type(json_data))
+        return json_data
 
     def import_json(self) -> None:
         try:
