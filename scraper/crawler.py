@@ -26,7 +26,6 @@ class Crawler(ABC):
 
     def export_json(self) -> str:
         json_data = json.dumps(self.data, indent=4, ensure_ascii=False)
-        print(type(json_data))
         return json_data
 
     def import_json(self) -> None:
